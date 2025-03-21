@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Text Summarizer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f7f9fc;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        .tab-container {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            border-bottom: 3px solid #3498db;
+            color: #3498db;
+            font-weight: 600;
+        }
+        .input-method-container {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .input-method {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .input-method.active {
+            border-bottom: 3px solid #3498db;
+            color: #3498db;
+            font-weight: 600;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        textarea {
+            width: 100%;
+            min-height: 180px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 15px;
+            transition: border 0.3s;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .option-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        select, input[type="range"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: white;
+        }
+        .range-value {
+            text-align: center;
+            font-weight: 600;
+            color: #3498db;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 6px;
+            display: block;
+            margin: 0 auto;
+            transition: background-color 0.3s;
+            font-weight: 600;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .summary-container {
+            margin-top: 25px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            display: none;
+        }
+        .summary {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 6px;
+            border-left: 4px solid #3498db;
+            font-size: 16px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #7f8c8d;
+            flex-wrap: wrap;
+        }
+        .stats div {
+            margin: 5px 0;
+        }
+        .alert {
+            padding: 15px;
+            background-color: #f8d7da;
+            color: #721c24;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .file-drop-area {
+            border: 2px dashed #3498db;
+            border-radius: 6px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            background-color: #f8f9fa;
+            display: none;
+        }
+        .file-drop-area.active {
+            background-color: #e3f2fd;
+        }
+        .file-input {
+            display: none;
+        }
+        .file-msg {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .or-divider {
+            text-align: center;
+            margin: 15px 0;
+            color: #7f8c8d;
+            position: relative;
+        }
+        .or-divider:before, .or-divider:after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 45%;
+            height: 1px;
+            background-color: #ddd;
+        }
+        .or-divider:before {
+            left: 0;
+        }
+        .or-divider:after {
+            right: 0;
+        }
+        .file-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        @media (max-width: 600px) {
+            .options {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Advanced Text Summarizer</h1>
+    <div class="container">
+        <div class="tab-container">
+            <div class="tab active" data-tab="ai">AI Summarization</div>
+            <div class="tab" data-tab="extractive">Extractive Summarization</div>
+        </div>
+        
+        <div class="input-method-container">
+            <div class="input-method active" data-input="text">Text Input</div>
+            <div class="input-method" data-input="pdf">PDF Upload</div>
+        </div>
+        
+        <div class="alert" id="error-message"></div>
+        
+        <div id="text-input-area">
+            <label for="original-text">Paste your text below:</label>
+            <textarea id="original-text" placeholder="Paste the paragraph you want to summarize here..."></textarea>
+        </div>
+        
+        <div id="pdf-input-area" class="file-drop-area">
+            <div class="file-msg">Drag & drop your PDF here or click to browse</div>
+            <input type="file" id="pdf-upload" class="file-input" accept=".pdf">
+            <button id="browse-button" class="browse-btn">Browse Files</button>
+            <div id="file-info" class="file-info"></div>
+        </div>
+        
+        <div class="options" id="ai-options">
+            <div class="option-group">
+                <label for="model-select">Summarization Model:</label>
+                <select id="model-select">
+                    <option value="facebook/bart-large-cnn">BART (News/Articles)</option>
+                    <option value="t5-base">T5 (General Purpose)</option>
+                    <option value="sshleifer/distilbart-cnn-12-6">DistilBART (Faster)</option>
+                </select>
+            </div>
+            
+            <div class="option-group">
+                <label for="max-length">Max Summary Length: <span id="length-value">150</span> words</label>
+                <input type="range" id="max-length" min="50" max="300" value="150">
+            </div>
+        </div>
+        
+        <div class="options" id="extractive-options" style="display:none;">
+            <div class="option-group">
+                <label for="sentence-percent">Sentence Retention: <span id="percent-value">30</span>%</label>
+                <input type="range" id="sentence-percent" min="10" max="70" value="30">
+            </div>
+            
+            <div class="option-group">
+                <label for="algorithm-select">Algorithm:</label>
+                <select id="algorithm-select">
+                    <option value="frequency">Keyword Frequency</option>
+                    <option value="position">Position Based</option>
+                    <option value="combined">Combined Approach</option>
+                </select>
+            </div>
+        </div>
+        
+        <button id="summarize-button">Summarize Text</button>
+        
+        <div class="loading" id="loading-indicator">
+            <div class="loading-spinner"></div>
+            <p>Generating summary...</p>
+        </div>
+        
+        <div id="summary-section" class="summary-container">
+            <h3>Summary</h3>
+            <div id="summary-output" class="summary"></div>
+            
+            <div class="stats">
+                <div>Original length: <span id="original-length">0</span> words</div>
+                <div>Summary length: <span id="summary-length">0</span> words</div>
+                <div>Reduction: <span id="reduction-percent">0</span>%</div>
+                <div>Method: <span id="summary-method">AI</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script>
+        // Set PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        
+        // Variables for PDF handling
+        let uploadedPdfText = '';
+        let currentPdfFile = null;
+        
+        // Update range sliders
+        document.getElementById('max-length').addEventListener('input', function() {
+            document.getElementById('length-value').textContent = this.value;
+        });
+        
+        document.getElementById('sentence-percent').addEventListener('input', function() {
+            document.getElementById('percent-value').textContent = this.value;
+        });
+        
+        // Tab switching
+        const tabs = document.querySelectorAll('.tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Update active tab
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Show appropriate options
+                const tabName = tab.getAttribute('data-tab');
+                if (tabName === 'ai') {
+                    document.getElementById('ai-options').style.display = 'flex';
+                    document.getElementById('extractive-options').style.display = 'none';
+                } else {
+                    document.getElementById('ai-options').style.display = 'none';
+                    document.getElementById('extractive-options').style.display = 'flex';
+                }
+            });
+        });
+        
+        // Input method switching
+        const inputMethods = document.querySelectorAll('.input-method');
+        inputMethods.forEach(method => {
+            method.addEventListener('click', () => {
+                // Update active input method
+                inputMethods.forEach(m => m.classList.remove('active'));
+                method.classList.add('active');
+                
+                // Show appropriate input area
+                const inputType = method.getAttribute('data-input');
+                if (inputType === 'text') {
+                    document.getElementById('text-input-area').style.display = 'block';
+                    document.getElementById('pdf-input-area').style.display = 'none';
+                } else {
+                    document.getElementById('text-input-area').style.display = 'none';
+                    document.getElementById('pdf-input-area').style.display = 'block';
+                }
+            });
+        });
+        
+        // PDF Upload handling
+        const dropArea = document.getElementById('pdf-input-area');
+        const fileInput = document.getElementById('pdf-upload');
+        const browseButton = document.getElementById('browse-button');
+        const fileInfo = document.getElementById('file-info');
+        
+        // Trigger file input when clicking on drop area or browse button
+        dropArea.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        browseButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            fileInput.click();
+        });
+        
+        // Prevent default behavior when dragging over drop area
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        // Highlight drop area when dragging file over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dropArea.classList.add('active');
+        }
+        
+        function unhighlight() {
+            dropArea.classList.remove('active');
+        }
+        
+        // Handle dropped files
+        dropArea.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+        
+        // Handle files from file input
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+        
+        function handleFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type === 'application/pdf') {
+                    currentPdfFile = file;
+                    fileInfo.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
+                    extractTextFromPdf(file);
+                } else {
+                    showError('Please select a PDF file');
+                }
+            }
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' bytes';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            else return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+        
+        async function extractTextFromPdf(pdfFile) {
+            try {
+                document.getElementById('loading-indicator').style.display = 'block';
+                
+                const arrayBuffer = await pdfFile.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                
+                let fullText = '';
+                
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const textItems = textContent.items.map(item => item.str);
+                    fullText += textItems.join(' ') + ' ';
+                }
+                
+                uploadedPdfText = fullText.trim();
+                showMessage(`PDF successfully processed. ${pdf.numPages} pages extracted.`);
+            } catch (error) {
+                console.error('Error extracting text from PDF:', error);
+                showError('Error extracting text from PDF: ' + error.message);
+            } finally {
+                document.getElementById('loading-indicator').style.display = 'none';
+            }
+        }
+        
+        function showMessage(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            errorElement.style.backgroundColor = '#d4edda';
+            errorElement.style.color = '#155724';
+            errorElement.style.display = 'block';
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
+        }
+        
+        document.getElementById('summarize-button').addEventListener('click', summarizeText);
+
+        async function summarizeText() {
+            // Determine which input method is active
+            const activeInputMethod = document.querySelector('.input-method.active').getAttribute('data-input');
+            
+            let originalText;
+            
+            if (activeInputMethod === 'text') {
+                originalText = document.getElementById('original-text').value.trim();
+            } else {
+                if (!uploadedPdfText) {
+                    showError('Please upload and process a PDF file first!');
+                    return;
+                }
+                originalText = uploadedPdfText;
+            }
+            
+            console.log("Original Text:", originalText); // Debug log
+
+            if (originalText === '') {
+                showError('Please enter some text to summarize!');
+                return;
+            }
+            
+            // Calculate original text stats
+            const originalWords = originalText.split(/\s+/).length;
+            console.log("Original Word Count:", originalWords); // Debug log
+            
+            // Show loading indicator and disable button
+            document.getElementById('loading-indicator').style.display = 'block';
+            document.getElementById('summarize-button').disabled = true;
+            document.getElementById('error-message').style.display = 'none';
+            
+            try {
+                let summary;
+                let method;
+                
+                // Determine which method to use based on active tab
+                const activeTab = document.querySelector('.tab.active').getAttribute('data-tab');
+                console.log("Active Tab:", activeTab); // Debug log
+                
+                if (activeTab === 'ai') {
+                    // AI-based summarization using Hugging Face API
+                    const model = document.getElementById('model-select').value;
+                    const maxLength = parseInt(document.getElementById('max-length').value);
+                    summary = await aiSummarize(originalText, model, maxLength);
+                    method = "AI (" + model.split('/').pop() + ")";
+                } else {
+                    // Local extractive summarization
+                    const retentionPercent = parseInt(document.getElementById('sentence-percent').value);
+                    const algorithm = document.getElementById('algorithm-select').value;
+                    summary = extractiveSummarize(originalText, retentionPercent, algorithm);
+                    method = "Extractive (" + algorithm + ")";
+                }
+                
+                const summaryWords = summary.split(/\s+/).length;
+                const reductionPercent = Math.round((1 - summaryWords / originalWords) * 100);
+                
+                // Display the summary
+                document.getElementById('summary-output').textContent = summary;
+                document.getElementById('original-length').textContent = originalWords;
+                document.getElementById('summary-length').textContent = summaryWords;
+                document.getElementById('reduction-percent').textContent = reductionPercent;
+                document.getElementById('summary-method').textContent = method;
+                
+                // Show the summary section
+                document.getElementById('summary-section').style.display = 'block';
+            } catch (error) {
+                console.error('Error generating summary:', error); // Debug log
+                showError('Error generating summary: ' + error.message);
+            } finally {
+                // Hide loading indicator and re-enable button
+                document.getElementById('loading-indicator').style.display = 'none';
+                document.getElementById('summarize-button').disabled = false;
+            }
+        }
+        
+        async function aiSummarize(text, model, maxLength) {
+            const API_URL = "https://api-inference.huggingface.co/models/" + model;
+            const API_KEY = "YOUR_HUGGINGFACE_API_KEY"; // Replace with your actual API key
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${API_KEY}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        inputs: text,
+                        parameters: {
+                            max_length: maxLength,
+                            min_length: Math.max(30, Math.floor(maxLength * 0.4)),
+                            do_sample: false
+                        }
+                    })
+                });
+                
+                if (!response.ok) {
+                    console.warn("API call failed, falling back to extractive summarization");
+                    return extractiveSummarize(text, 30, "combined") + 
+                           " [Note: This is a fallback summary as the API call failed.]";
+                }
+                
+                const result = await response.json();
+                return result[0].summary_text || result[0].generated_text || "No summary generated";
+            } catch (error) {
+                console.error("API Error:", error);
+                return extractiveSummarize(text, 30, "combined") + 
+                       " [Note: This is a fallback summary as the API call failed.]";
+            }
+        }
+        
+        function extractiveSummarize(text, retentionPercent, algorithm) {
+            const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+            
+            if (sentences.length <= 3) {
+                return text; // Return original if very short
+            }
+            
+            const sentenceScores = sentences.map((sentence, index) => {
+                let score = 0;
+                
+                if (algorithm === 'frequency' || algorithm === 'combined') {
+                    score += countKeywords(sentence, text) * 2;
+                }
+                
+                if (algorithm === 'position' || algorithm === 'combined') {
+                    if (index === 0 || index === sentences.length - 1) {
+                        score += 3;
+                    } else if (index <= Math.ceil(sentences.length * 0.2) || 
+                              index >= Math.floor(sentences.length * 0.8)) {
+                        score += 2;
+                    }
+                    
+                    const wordCount = sentence.split(/\s+/).length;
+                    if (wordCount >= 5) {
+                        score += Math.min(wordCount / 10, 2);
+                    }
+                }
+                
+                return {
+                    sentence,
+                    index,
+                    score
+                };
+            });
+            
+            sentenceScores.sort((a, b) => b.score - a.score);
+            
+            const numSentencesToKeep = Math.max(
+                1,
+                Math.ceil(sentences.length * (retentionPercent / 100))
+            );
+            
+            const topSentences = sentenceScores
+                .slice(0, numSentencesToKeep)
+                .sort((a, b) => a.index - b.index)
+                .map(item => item.sentence);
+            
+            return topSentences.join(' ');
+        }
+        
+        function countKeywords(sentence, fullText) {
+            const words = fullText.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/);
+            const sentenceWords = sentence.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/);
+            
+            const wordFrequency = {};
+            for (const word of words) {
+                if (word.length > 3) {
+                    wordFrequency[word] = (wordFrequency[word] || 0) + 1;
+                }
+            }
+            
+            const sortedWords = Object.keys(wordFrequency).sort((a, b) => {
+                return wordFrequency[b] - wordFrequency[a];
+            });
+            
+            const topKeywords = sortedWords.slice(0, Math.min(20, sortedWords.length * 0.1));
+            
+            let keywordCount = 0;
+            let uniqueKeywords = new Set();
+            
+            for (const word of sentenceWords) {
+                if (topKeywords.includes(word) && !uniqueKeywords.has(word)) {
+                    keywordCount++;
+                    uniqueKeywords.add(word);
+                }
+            }
+            
+            return keywordCount;
+        }
+        
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            errorElement.style.backgroundColor = '#f8d7da';
+            errorElement.style.color = '#721c24';
+            errorElement.style.display = 'block';
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Initialize the UI
+        document.getElementById('text-input-area').style.display = 'block';
+        document.getElementById('pdf-input-area').style.display = 'none';
+    </script>
+</body>
+</html>
