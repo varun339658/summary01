@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuizMaster - Interactive Quiz App</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #f59e0b;
+            --background: #f9fafb;
+            --text: #1f2937;
+            --card: #ffffff;
+            --error: #ef4444;
+            --success: #10b913;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        header h1 {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .card {
+            background-color: var(--card);
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        #welcome-screen {
+            text-align: center;
+        }
+        
+        #welcome-screen h2 {
+            margin-bottom: 1rem;
+        }
+        
+        #welcome-screen p {
+            margin-bottom: 1.5rem;
+        }
+        
+        #quiz-screen, #results-screen, #badge-screen {
+            display: none;
+        }
+        
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .progress-container {
+            height: 8px;
+            width: 100%;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .question {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .option {
+            padding: 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .option:hover {
+            border-color: var(--primary);
+            background-color: rgba(99, 102, 241, 0.05);
+        }
+        
+        .option.selected {
+            border-color: var(--primary);
+            background-color: rgba(99, 102, 241, 0.1);
+        }
+        
+        .option.correct {
+            border-color: var(--success);
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+        
+        .option.incorrect {
+            border-color: var(--error);
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #d97706;
+        }
+        
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        #results-screen h2 {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        .score-display {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 1.5rem 0;
+        }
+        
+        .badges-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .badge-icon {
+            width: 80px;
+            height: 80px;
+            background-color: #e5e7eb;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: var(--primary);
+        }
+        
+        .badge-icon.earned {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .badge-info {
+            text-align: center;
+        }
+        
+        .stats-container {
+            margin-top: 2rem;
+        }
+        
+        .stats-header {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background-color: rgba(99, 102, 241, 0.1);
+            border-radius: 0.5rem;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        #feedback {
+            text-align: center;
+            margin-top: 1rem;
+            min-height: 24px;
+            color: var(--primary);
+        }
+        
+        .timer-container {
+            text-align: center;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        
+        .category-tag {
+            display: inline-block;
+            background-color: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+            border-radius: 9999px;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        @media (max-width: 640px) {
+            .card {
+                padding: 1rem;
+            }
+            
+            .question {
+                font-size: 1.1rem;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>QuizMaster</h1>
+            <p>Test your knowledge and earn badges</p>
+        </header>
+        
+        <div id="welcome-screen" class="card">
+            <h2>Welcome to QuizMaster!</h2>
+            <p>Ready to test your knowledge? Answer questions correctly to earn points and unlock special badges.</p>
+            <div class="actions">
+                <button id="start-btn" class="btn">Start Quiz</button>
+            </div>
+        </div>
+        
+        <div id="quiz-screen" class="card">
+            <div class="quiz-header">
+                <div>
+                    <span id="question-number">Question 1</span> of <span id="total-questions">10</span>
+                </div>
+                <div id="score-display">Score: <span id="current-score">0</span></div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            
+            <div class="timer-container">
+                Time: <span id="timer">30</span>s
+            </div>
+            
+            <div class="category-tag" id="category">General Knowledge</div>
+            
+            <div class="question" id="question-text">
+                Which planet is known as the Red Planet?
+            </div>
+            
+            <div class="options" id="options-container">
+                <!-- Options will be inserted here dynamically -->
+            </div>
+            
+            <div id="feedback"></div>
+            
+            <div class="actions">
+                <button id="next-btn" class="btn" disabled>Next Question</button>
+            </div>
+        </div>
+        
+        <div id="results-screen" class="card">
+            <h2>Quiz Completed!</h2>
+            
+            <div class="score-display">
+                <span id="final-score">0</span>/<span id="max-score">100</span>
+            </div>
+            
+            <div id="score-message">Great job!</div>
+            
+            <h3 style="text-align: center; margin-top: 1.5rem;">Badges Earned</h3>
+            
+            <div class="badges-container" id="badges-container">
+                <!-- Badges will be inserted here dynamically -->
+            </div>
+            
+            <div class="stats-container">
+                <div class="stats-header">Your Performance</div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="correct-answers">0</div>
+                        <div class="stat-label">Correct Answers</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="accuracy">0%</div>
+                        <div class="stat-label">Accuracy</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="avg-time">0s</div>
+                        <div class="stat-label">Avg. Time</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="fastest-answer">0s</div>
+                        <div class="stat-label">Fastest Answer</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="actions">
+                <button id="restart-btn" class="btn">Restart Quiz</button>
+                <button id="show-badges-btn" class="btn btn-secondary">View All Badges</button>
+            </div>
+        </div>
+        
+        <div id="badge-screen" class="card">
+            <h2 style="text-align: center; margin-bottom: 1.5rem;">Your Badge Collection</h2>
+            
+            <div class="badges-container" id="all-badges-container">
+                <!-- All badges will be inserted here dynamically -->
+            </div>
+            
+            <div class="actions">
+                <button id="back-btn" class="btn">Back to Results</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Quiz data
+        const quizData = [
+            {
+                question: "Which planet is known as the Red Planet?",
+                options: ["Venus", "Mars", "Jupiter", "Saturn"],
+                answer: 1,
+                category: "Science",
+                difficulty: "easy",
+                points: 10
+            },
+            {
+                question: "What is the capital of France?",
+                options: ["London", "Berlin", "Paris", "Madrid"],
+                answer: 2,
+                category: "Geography",
+                difficulty: "easy",
+                points: 10
+            },
+            {
+                question: "Which element has the chemical symbol 'O'?",
+                options: ["Gold", "Oxygen", "Osmium", "Oganesson"],
+                answer: 1,
+                category: "Science",
+                difficulty: "easy",
+                points: 10
+            },
+            {
+                question: "Which famous scientist developed the theory of relativity?",
+                options: ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Nikola Tesla"],
+                answer: 1,
+                category: "Science",
+                difficulty: "medium",
+                points: 15
+            },
+            {
+                question: "In which year did World War II end?",
+                options: ["1943", "1944", "1945", "1946"],
+                answer: 2,
+                category: "History",
+                difficulty: "medium",
+                points: 15
+            },
+            {
+                question: "What is the largest ocean on Earth?",
+                options: ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"],
+                answer: 3,
+                category: "Geography",
+                difficulty: "easy",
+                points: 10
+            },
+            {
+                question: "Which programming language was created by James Gosling?",
+                options: ["Python", "Java", "C++", "JavaScript"],
+                answer: 1,
+                category: "Technology",
+                difficulty: "medium",
+                points: 15
+            },
+            {
+                question: "What is the square root of 144?",
+                options: ["10", "12", "14", "16"],
+                answer: 1,
+                category: "Mathematics",
+                difficulty: "easy",
+                points: 10
+            },
+            {
+                question: "Which of these is not a primary color?",
+                options: ["Red", "Blue", "Green", "Yellow"],
+                answer: 3,
+                category: "Arts",
+                difficulty: "easy",
+                points: 10
+            },
+            {
+                question: "What is the powerhouse of the cell?",
+                options: ["Nucleus", "Mitochondria", "Endoplasmic Reticulum", "Golgi Apparatus"],
+                answer: 1,
+                category: "Biology",
+                difficulty: "medium",
+                points: 15
+            }
+        ];
+
+        // Badge definitions
+        const badgeDefinitions = [
+            {
+                id: "first-quiz",
+                name: "First Quiz",
+                description: "Completed your first quiz",
+                icon: "🏆",
+                condition: stats => stats.quizzesCompleted >= 1
+            },
+            {
+                id: "perfect-score",
+                name: "Perfect Score",
+                description: "Got 100% on a quiz",
+                icon: "🌟",
+                condition: stats => stats.correctAnswers === quizData.length
+            },
+            {
+                id: "speed-demon",
+                name: "Speed Demon",
+                description: "Average answer time under 10 seconds",
+                icon: "⚡",
+                condition: stats => stats.averageTime < 10
+            },
+            {
+                id: "science-whiz",
+                name: "Science Whiz",
+                description: "Got all science questions correct",
+                icon: "🔬",
+                condition: stats => stats.scienceCorrect === stats.scienceTotal
+            },
+            {
+                id: "geography-expert",
+                name: "Geography Expert",
+                description: "Got all geography questions correct",
+                icon: "🌍",
+                condition: stats => stats.geographyCorrect === stats.geographyTotal
+            },
+            {
+                id: "history-buff",
+                name: "History Buff",
+                description: "Got all history questions correct",
+                icon: "📜",
+                condition: stats => stats.historyCorrect === stats.historyTotal
+            }
+        ];
+
+        // Elements
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const badgeScreen = document.getElementById('badge-screen');
+        
+        const startBtn = document.getElementById('start-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const showBadgesBtn = document.getElementById('show-badges-btn');
+        const backBtn = document.getElementById('back-btn');
+        
+        const questionNumber = document.getElementById('question-number');
+        const totalQuestions = document.getElementById('total-questions');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const progressBar = document.getElementById('progress-bar');
+        const categoryTag = document.getElementById('category');
+        const timerElement = document.getElementById('timer');
+        const feedbackElement = document.getElementById('feedback');
+        const currentScoreElement = document.getElementById('current-score');
+        
+        const finalScoreElement = document.getElementById('final-score');
+        const maxScoreElement = document.getElementById('max-score');
+        const scoreMessageElement = document.getElementById('score-message');
+        const correctAnswersElement = document.getElementById('correct-answers');
+        const accuracyElement = document.getElementById('accuracy');
+        const avgTimeElement = document.getElementById('avg-time');
+        const fastestAnswerElement = document.getElementById('fastest-answer');
+        
+        const badgesContainer = document.getElementById('badges-container');
+        const allBadgesContainer = document.getElementById('all-badges-container');
+        
+        // Game state
+        let currentQuestion = 0;
+        let score = 0;
+        let timer;
+        let timeLeft = 30;
+        let selectedOption = null;
+        let quizStats = {
+            correctAnswers: 0,
+            totalAnswers: 0,
+            totalTime: 0,
+            fastestAnswer: Infinity,
+            quizzesCompleted: 0,
+            scienceCorrect: 0,
+            scienceTotal: 0,
+            geographyCorrect: 0,
+            geographyTotal: 0,
+            historyCorrect: 0,
+            historyTotal: 0
+        };
+        
+        // User progress (would normally be saved to localStorage or a database)
+        let userProgress = {
+            badges: [],
+            quizzesCompleted: 0,
+            highScore: 0
+        };
+        
+        // Initialize quiz
+        function initQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            quizStats = {
+                correctAnswers: 0,
+                totalAnswers: 0,
+                totalTime: 0,
+                fastestAnswer: Infinity,
+                quizzesCompleted: 0,
+                scienceCorrect: 0,
+                scienceTotal: 0,
+                geographyCorrect: 0,
+                geographyTotal: 0,
+                historyCorrect: 0,
+                historyTotal: 0
+            };
+            
+            // Count category questions
+            quizData.forEach(q => {
+                if (q.category === "Science") quizStats.scienceTotal++;
+                if (q.category === "Geography") quizStats.geographyTotal++;
+                if (q.category === "History") quizStats.historyTotal++;
+            });
+            
+            // Update UI
+            totalQuestions.textContent = quizData.length;
+            currentScoreElement.textContent = score;
+            maxScoreElement.textContent = quizData.reduce((total, q) => total + q.points, 0);
+            
+            welcomeScreen.style.display = 'none';
+            quizScreen.style.display = 'block';
+            resultsScreen.style.display = 'none';
+            badgeScreen.style.display = 'none';
+            
+            loadQuestion();
+        }
+        
+        // Load current question
+        function loadQuestion() {
+            const question = quizData[currentQuestion];
+            
+            questionNumber.textContent = currentQuestion + 1;
+            questionText.textContent = question.question;
+            categoryTag.textContent = question.category;
+            
+            // Clear options
+            optionsContainer.innerHTML = '';
+            
+            // Add options
+            question.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.dataset.index = index;
+                optionElement.addEventListener('click', selectOption);
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            // Update progress bar
+            const progress = ((currentQuestion) / quizData.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            
+            // Reset feedback
+            feedbackElement.textContent = '';
+            
+            // Reset next button
+            nextBtn.disabled = true;
+            
+            // Reset timer
+            timeLeft = 30;
+            timerElement.textContent = timeLeft;
+            clearInterval(timer);
+            startTimer();
+            
+            // Reset selected option
+            selectedOption = null;
+        }
+        
+        // Start timer
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    handleTimeOut();
+                }
+            }, 1000);
+        }
+        
+        // Handle time out
+        function handleTimeOut() {
+            // Disable all options
+            const options = document.querySelectorAll('.option');
+            options.forEach(opt => {
+                opt.removeEventListener('click', selectOption);
+                opt.style.cursor = 'default';
+            });
+            
+            // Show correct answer
+            const correctIndex = quizData[currentQuestion].answer;
+            options[correctIndex].classList.add('correct');
+            
+            // Enable next button
+            nextBtn.disabled = false;
+            
+            // Show feedback
+            feedbackElement.textContent = "Time's up!";
+            
+            // Update stats
+            quizStats.totalAnswers++;
+        }
+        
+        // Select option
+        function selectOption(e) {
+            if (selectedOption !== null) return;
+            
+            clearInterval(timer);
+            const timeSpent = 30 - timeLeft;
+            quizStats.totalTime += timeSpent;
+            quizStats.fastestAnswer = Math.min(quizStats.fastestAnswer, timeSpent);
+            
+            selectedOption = parseInt(e.target.dataset.index);
+            const correctIndex = quizData[currentQuestion].answer;
+            
+            // Highlight selected option
+            const options = document.querySelectorAll('.option');
+            options.forEach(opt => {
+                opt.removeEventListener('click', selectOption);
+                opt.style.cursor = 'default';
+            });
+            
+            e.target.classList.add('selected');
+            
+            // Check if correct
+            if (selectedOption === correctIndex) {
+                e.target.classList.add('correct');
+                const points = quizData[currentQuestion].points;
+                score += points;
+                currentScoreElement.textContent = score;
+                feedbackElement.textContent = `Correct! +${points} points`;
+                
+                quizStats.correctAnswers++;
+                
+                // Update category stats
+                const category = quizData[currentQuestion].category;
+                if (category === "Science") quizStats.scienceCorrect++;
+                if (category === "Geography") quizStats.geographyCorrect++;
+                if (category === "History") quizStats.historyCorrect++;
+            } else {
+                e.target.classList.add('incorrect');
+                options[correctIndex].classList.add('correct');
+                feedbackElement.textContent = "Incorrect! The correct answer is highlighted.";
+            }
+            
+            quizStats.totalAnswers++;
+            
+            // Enable next button
+            nextBtn.disabled = false;
+        }
+        
+        // Next question or finish quiz
+        function nextQuestion() {
+            currentQuestion++;
+            
+            if (currentQuestion < quizData.length) {
+                loadQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+        
+        // Finish quiz
+        function finishQuiz() {
+            quizScreen.style.display = 'none';
+            resultsScreen.style.display = 'block';
+            
+            // Update quiz stats
+            quizStats.quizzesCompleted = ++userProgress.quizzesCompleted;
+            
+            // Update high score
+            if (score > userProgress.highScore) {
+                userProgress.highScore = score;
+            }
+            
+            // Display results
+            finalScoreElement.textContent = score;
+            correctAnswersElement.textContent = quizStats.correctAnswers;
+            accuracyElement.textContent = `${Math.round(quizStats.correctAnswers / quizStats.totalAnswers * 100)}%`;
+            avgTimeElement.textContent = `${(quizStats.totalTime / quizStats.totalAnswers).toFixed(1)}s`;
+            fastestAnswerElement.textContent = `${quizStats.fastestAnswer === Infinity ? "N/A" : quizStats.fastestAnswer + "s"}`;
+            
+            // Set score message
+            let message;
+            const percentage = (score / parseInt(maxScoreElement.textContent)) * 100;
+            
+            if (percentage === 100) {
+                message = "Perfect! You're a quiz master!";
+            } else if (percentage >= 80) {
+                message = "Excellent! You really know your stuff!";
+            } else if (percentage >= 60) {
+                message = "Good job! You've got solid knowledge!";
+            } else if (percentage >= 40) {
+                message = "Not bad! Keep learning and try again!";
+            } else {
+                message = "Keep practicing! You'll improve next time!";
+            }
+            
+            scoreMessageElement.textContent = message;
+            
+            // Check for earned badges
+            const earnedBadges = checkBadges();
+            displayEarnedBadges(earnedBadges);
+            
+            // Update all badges for badge screen
+            updateAllBadges();
+        }
+        
+        // Check for earned badges
+        function checkBadges() {
+            const earnedBadges = [];
+            
+            badgeDefinitions.forEach(badge => {
+                if (badge.condition(quizStats) && !userProgress.badges.includes(badge.id)) {
+                    earnedBadges.push(badge);
+                    userProgress.badges.push(badge.id);
+                }
+            });
+            
+            return earnedBadges;
+        }
+        
+        // Display earned badges
+        function displayEarnedBadges(badges) {
+            badgesContainer.innerHTML = '';
+            
+            if (badges.length === 0) {
+                const message = document.createElement('p');
+                message.textContent = "No new badges earned this time. Keep trying!";
+                message.style.textAlign = 'center';
+                badgesContainer.appendChild(message);
+                return;
+            }
+            
+            badges.forEach(badge => {
+                const badgeElement = document.createElement('div');
+                badgeElement.className = 'badge';
+                
+                const badgeIcon = document.createElement('div');
+                badgeIcon.className = 'badge-icon earned';
+                badgeIcon.textContent = badge.icon;
+                
+                const badgeInfo = document.createElement('div');
+                badgeInfo.className = 'badge-info';
+                badgeInfo.innerHTML = `<div><strong>${badge.name}</strong></div><div>${badge.description}</div>`;
+                
+                badgeElement.appendChild(badgeIcon);
+                badgeElement.appendChild(badgeInfo);
+                badgesContainer.appendChild(badgeElement);
+            });
+        }
+        
+        // Update all badges for badge screen
+        function updateAllBadges() {
+            allBadgesContainer.innerHTML = '';
+            
+            badgeDefinitions.forEach(badge => {
+                const badgeElement = document.createElement('div');
+                badgeElement.className = 'badge';
+                
+                const badgeIcon = document.createElement('div');
+                badgeIcon.className = userProgress.badges.includes(badge.id) ? 'badge-icon earned' : 'badge-icon';
+                badgeIcon.textContent = badge.icon;
+                
+                const badgeInfo = document.createElement('div');
+                badgeInfo.className = 'badge-info';
+                badgeInfo.innerHTML = `<div><strong>${badge.name}</strong></div><div>${badge.description}</div>`;
+                
+                badgeElement.appendChild(badgeIcon);
+                badgeElement.appendChild(badgeInfo);
+                allBadgesContainer.appendChild(badgeElement);
+            });
+        }
+        
+        // Event listeners
+        startBtn.addEventListener('click', initQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        restartBtn.addEventListener('click', initQuiz);
+        
+        showBadgesBtn.addEventListener('click', () => {
+            resultsScreen.style.display = 'none';
+            badgeScreen.style.display = 'block';
+        });
+        
+        backBtn.addEventListener('click', () => {
+            badgeScreen.style.display = 'none';
+            resultsScreen.style.display = 'block';
+        });
+    </script>
+</body>
+</html>

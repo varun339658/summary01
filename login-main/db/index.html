@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="module" src="firebaseauth.js" defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 400px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-weight: 600;
+        }
+        .form-section {
+            display: none;
+        }
+        .form-section.active {
+            display: block;
+        }
+        .float-label {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .float-label input {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-bottom: 2px solid #ddd;
+            background: transparent;
+            font-size: 1rem;
+        }
+        .float-label label {
+            position: absolute;
+            top: 0.8rem;
+            left: 0.5rem;
+            color: #777;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+        .float-label input:focus,
+        .float-label input:not(:placeholder-shown) {
+            border-color: #667eea;
+            outline: none;
+        }
+        .float-label input:focus + label,
+        .float-label input:not(:placeholder-shown) + label {
+            top: -0.5rem;
+            left: 0;
+            font-size: 0.8rem;
+            color: #667eea;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 0.8rem;
+            width: 100%;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .form-switcher {
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+        .form-switcher a {
+            color: #667eea;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .welcome-screen {
+            display: none;
+            text-align: center;
+        }
+        .welcome-screen.active {
+            display: block;
+        }
+        .nav-tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #ddd;
+        }
+        .nav-tab {
+            padding: 0.5rem 1rem;
+            margin-right: 0.5rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-tab.active {
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-form="signin">Sign In</div>
+            <div class="nav-tab" data-form="signup">Sign Up</div>
+        </div>
+
+        <!-- Sign In Form -->
+        <div class="form-section active" id="signin-form">
+            <h1>Welcome Back</h1>
+            <form id="loginForm">
+                <div class="float-label">
+                    <input type="email" id="login-email" placeholder=" " required>
+                    <label for="login-email">Email Address</label>
+                </div>
+                
+                <div class="float-label">
+                    <input type="password" id="login-password" placeholder=" " required>
+                    <label for="login-password">Password</label>
+                </div>
+                
+                <button type="submit" id="submit">Sign In</button>
+                
+                <div class="form-switcher">
+                    <p>Don't have an account? <a class="form-link" data-form="signup">Sign Up</a></p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sign Up Form -->
+        <div class="form-section" id="signup-form">
+            <h1>Create Account</h1>
+            <form id="registerForm">
+                <div class="float-label">
+                    <input type="text" id="name" placeholder=" " required>
+                    <label for="name">Full Name</label>
+                </div>
+                
+                <div class="float-label">
+                    <input type="email" id="email" placeholder=" " required>
+                    <label for="email">Email Address</label>
+                </div>
+                
+                <div class="float-label">
+                    <input type="password" id="password" placeholder=" " required>
+                    <label for="password">Password</label>
+                </div>
+                
+                <button type="submit">Sign Up</button>
+                
+                <div class="form-switcher">
+                    <p>Already have an account? <a class="form-link" data-form="signin">Sign In</a></p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Welcome Screen (after login) -->
+        <div class="welcome-screen" id="welcome-screen">
+            <h1>Welcome <span id="user-name">User</span>!</h1>
+            <p>You are logged in as <strong id="user-email">user@example.com</strong></p>
+            <button id="logout-btn" style="margin-top: 1.5rem;">Log Out</button>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.nav-tab, .form-link').forEach(el => {
+            el.addEventListener('click', function() {
+                const targetForm = this.dataset.form;
+                
+                document.querySelectorAll('.nav-tab').forEach(tab => {
+                    tab.classList.toggle('active', tab.dataset.form === targetForm);
+                });
+                
+                document.querySelectorAll('.form-section').forEach(form => {
+                    form.classList.remove('active');
+                });
+                document.getElementById(`${targetForm}-form`).classList.add('active');
+            });
+        });
+
+        // Sign In Form
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            
+            document.querySelectorAll('.form-section').forEach(form => {
+                form.classList.remove('active');
+            });
+            
+            document.getElementById('welcome-screen').classList.add('active');
+            document.getElementById('user-name').textContent = email.split('@')[0];
+            document.getElementById('user-email').textContent = email;
+            
+            localStorage.setItem('user', JSON.stringify({ name: email.split('@')[0], email }));
+        });
+
+        // Sign Up Form
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            
+            document.querySelectorAll('.form-section').forEach(form => {
+                form.classList.remove('active');
+            });
+            
+            document.getElementById('welcome-screen').classList.add('active');
+            document.getElementById('user-name').textContent = name;
+            document.getElementById('user-email').textContent = email;
+            
+            localStorage.setItem('user', JSON.stringify({ name, email }));
+        });
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', function() {
+            localStorage.removeItem('user');
+            document.getElementById('welcome-screen').classList.remove('active');
+            document.getElementById('signin-form').classList.add('active');
+            
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.form === 'signin');
+            });
+        });
+
+        // Check if user is logged in
+        window.addEventListener('load', function() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user) {
+                document.querySelectorAll('.form-section').forEach(form => {
+                    form.classList.remove('active');
+                });
+                
+                document.getElementById('welcome-screen').classList.add('active');
+                document.getElementById('user-name').textContent = user.name;
+                document.getElementById('user-email').textContent = user.email;
+            }
+        });
+    </script>
+</body>
+</html>
